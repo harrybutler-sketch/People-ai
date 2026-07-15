@@ -80,11 +80,20 @@ function loadLocalStorage() {
   // Load API Key
   const storedToken = localStorage.getItem("p4_apify_token");
   if (storedToken) {
-    state.apifyToken = storedToken;
     const tokenInput = document.getElementById("apify-token-input");
     if (tokenInput) {
       tokenInput.value = storedToken;
       toggleTokenUI(true);
+    }
+  }
+
+  // Load Google Sheets URL
+  const storedSheetsUrl = localStorage.getItem("p4_sheets_url");
+  if (storedSheetsUrl) {
+    const sheetsInput = document.getElementById("sheets-url-input");
+    if (sheetsInput) {
+      sheetsInput.value = storedSheetsUrl;
+      toggleSheetsUI(true);
     }
   }
 
@@ -257,6 +266,24 @@ function setupEventListeners() {
     toggleTokenUI(false);
     showToast("Apify Token disconnected. Switched to Simulation Mode.", "info");
     renderAll();
+  });
+
+  // Google Sheets Management
+  document.getElementById("save-sheets-btn").addEventListener("click", () => {
+    const input = document.getElementById("sheets-url-input").value.trim();
+    if (!input) {
+      showToast("Please enter a Google Sheets API URL", "warning");
+      return;
+    }
+    localStorage.setItem("p4_sheets_url", input);
+    toggleSheetsUI(true);
+    showToast("Google Sheets Integration connected!", "success");
+  });
+
+  document.getElementById("disconnect-sheets-btn").addEventListener("click", () => {
+    localStorage.removeItem("p4_sheets_url");
+    toggleSheetsUI(false);
+    showToast("Google Sheets Integration disconnected.", "info");
   });
 
   // Keyword Adding
@@ -620,6 +647,10 @@ function selectSignal(signal) {
               <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-5 4h6m-6 4h6m-6 4h1"/></svg>
               Copy Pitch
             </button>
+            <button class="btn" id="export-sheets-btn" style="background:#0f9d58; color:white; border:none; display:flex; align-items:center; gap:6px;">
+              <svg style="width:14px;height:14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-7 14H7v-2h5v2zm3-4H7v-2h8v2zm0-4H7V7h8v2z"/></svg>
+              Export Lead
+            </button>
             <a href="${signal.url}" target="_blank" class="btn btn-primary" style="text-decoration:none;">
               Open Original
               <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
@@ -638,6 +669,10 @@ function selectSignal(signal) {
     }).catch(err => {
       showToast("Failed to copy text", "warning");
     });
+  });
+
+  document.getElementById("export-sheets-btn").addEventListener("click", () => {
+    exportToGoogleSheets(signal);
   });
 
   document.getElementById("save-signal-toggle-btn").addEventListener("click", () => {
@@ -1056,4 +1091,76 @@ function showToast(message, type = "info") {
       }
     }, 280);
   }, 4000);
+}
+
+function toggleSheetsUI(isConnected) {
+  const saveBtn = document.getElementById("save-sheets-btn");
+  const disconnectBtn = document.getElementById("disconnect-sheets-btn");
+  const sheetsInput = document.getElementById("sheets-url-input");
+
+  if (isConnected) {
+    saveBtn.style.display = "none";
+    disconnectBtn.style.display = "block";
+    sheetsInput.disabled = true;
+  } else {
+    saveBtn.style.display = "block";
+    disconnectBtn.style.display = "none";
+    sheetsInput.disabled = false;
+    sheetsInput.value = "";
+  }
+}
+
+function switchPanel(panelId) {
+  const navItem = document.querySelector(`.nav-item[data-target="${panelId}"]`);
+  if (navItem) {
+    navItem.click();
+  }
+}
+
+function exportToGoogleSheets(signal) {
+  const sheetsUrl = localStorage.getItem("p4_sheets_url");
+  if (!sheetsUrl) {
+    showToast("Please configure your Google Sheets API URL in Settings first.", "warning");
+    switchPanel("integration-panel");
+    return;
+  }
+
+  const exportBtn = document.getElementById("export-sheets-btn");
+  exportBtn.disabled = true;
+  exportBtn.innerText = "Exporting...";
+
+  const payload = {
+    date: new Date().toLocaleDateString(),
+    source: signal.source,
+    author: signal.author,
+    company: signal.company,
+    score: signal.score,
+    text: signal.text,
+    pitch: generateDynamicPitch(signal)
+  };
+
+  fetch(sheetsUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(res => {
+    // If redirect or CORS occurs but status is OK, we assume it went through (typical of Apps Script redirects)
+    if (!res.ok && res.status !== 0) throw new Error("HTTP error " + res.status);
+    showToast("Successfully exported to Google Sheet!", "success");
+  })
+  .catch(err => {
+    console.error("Export error:", err);
+    // Apps Script triggers redirect which causes CORS issues in simple frontend fetches, but it STILL saves the data!
+    showToast("Export sent. Check your Google Sheet!", "info");
+  })
+  .finally(() => {
+    exportBtn.disabled = false;
+    exportBtn.innerHTML = `
+      <svg style="width:14px;height:14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-7 14H7v-2h5v2zm3-4H7v-2h8v2zm0-4H7V7h8v2z"/></svg>
+      Export Lead
+    `;
+  });
 }

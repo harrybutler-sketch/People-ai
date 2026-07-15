@@ -182,6 +182,22 @@
               </div>
 
               <div class="config-card">
+                <h3 class="config-title">Google Sheets Integration</h3>
+                <p class="config-desc">Save your qualified leads directly to your Google Sheet. Paste your <strong>SheetDB.io API URL</strong> or <strong>Google Apps Script Web App URL</strong> below.</p>
+                <div class="form-group">
+                  <label class="form-label" for="sheets-url-input">Google Sheets API URL</label>
+                  <div style="display:flex;gap:12px;">
+                    <input type="text" class="form-input" id="sheets-url-input" style="flex-grow:1;" placeholder="https://sheetdb.io/api/v1/...">
+                    <button class="btn btn-primary" id="save-sheets-btn">Connect Sheet</button>
+                    <button class="btn" id="disconnect-sheets-btn" style="display:none;color:var(--color-warning);">Disconnect</button>
+                  </div>
+                  <span style="font-size:11px;color:var(--text-muted);margin-top:6px;display:block;">
+                    Your Connected Sheet: <a href="https://docs.google.com/spreadsheets/d/17nKZk4Od7cFPb8RjUCngDHOhSXN9ixotgcc6RxWnw8w/edit" target="_blank" style="color:var(--color-brand);text-decoration:underline;">Open Google Sheet ↗</a>
+                  </span>
+                </div>
+              </div>
+
+              <div class="config-card">
                 <h3 class="config-title">Scraper Run Center</h3>
                 <p class="config-desc">Trigger web scraping tasks using the connected Apify actors. Once triggered, the crawler runs in the background on Apify infrastructure and automatically streams results into this feed.</p>
                 
