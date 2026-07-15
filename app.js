@@ -12,6 +12,8 @@ let state = {
   apifyToken: "",
   hasBackendToken: false,
   apifyRuns: [],
+  googleAccessToken: null,
+  pendingExportSignal: null,
   keywords: {
     model: ["foundation model", "train", "fine-tuning", "vlm", "llm", "compute", "rlhf", "scaling compute"],
     sourcing: ["source", "vendor", "labeling", "annotation", "annotate", "annotators", "buy data", "license data", "sourcing"],
@@ -43,6 +45,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const savedTheme = localStorage.getItem("p4_theme") || "light";
   document.documentElement.setAttribute("data-theme", savedTheme);
   updateThemeIcon(savedTheme);
+
+  // Initialize direct Google Sheets API client
+  initGoogleTokenClient();
 
   // Set up periodic check for running Apify tasks (if token is present)
   if (state.apifyToken || state.hasBackendToken) {
@@ -87,14 +92,29 @@ function loadLocalStorage() {
     }
   }
 
-  // Load Google Sheets URL
-  const storedSheetsUrl = localStorage.getItem("p4_sheets_url");
-  if (storedSheetsUrl) {
-    const sheetsInput = document.getElementById("sheets-url-input");
-    if (sheetsInput) {
-      sheetsInput.value = storedSheetsUrl;
-      toggleSheetsUI(true);
-    }
+  // Load Google Sheets Config
+  const storedSpreadsheetId = localStorage.getItem("p4_google_spreadsheet_id");
+  if (storedSpreadsheetId) {
+    const sheetInput = document.getElementById("google-spreadsheet-id");
+    if (sheetInput) sheetInput.value = storedSpreadsheetId;
+  }
+  const storedSheetName = localStorage.getItem("p4_google_sheet_name");
+  if (storedSheetName) {
+    const tabInput = document.getElementById("google-sheet-name");
+    if (tabInput) tabInput.value = storedSheetName;
+  }
+  const storedClientId = localStorage.getItem("p4_google_client_id");
+  if (storedClientId) {
+    const clientInput = document.getElementById("google-client-id");
+    if (clientInput) clientInput.value = storedClientId;
+  }
+  
+  // Try loading access token
+  const storedAccessToken = localStorage.getItem("p4_google_access_token");
+  if (storedAccessToken) {
+    state.googleAccessToken = storedAccessToken;
+    // We toggle Google UI after a delay to ensure elements are ready
+    setTimeout(() => toggleGoogleUI(true), 100);
   }
 
   // Load Saved Signal IDs
@@ -268,22 +288,27 @@ function setupEventListeners() {
     renderAll();
   });
 
-  // Google Sheets Management
-  document.getElementById("save-sheets-btn").addEventListener("click", () => {
-    const input = document.getElementById("sheets-url-input").value.trim();
-    if (!input) {
-      showToast("Please enter a Google Sheets API URL", "warning");
-      return;
-    }
-    localStorage.setItem("p4_sheets_url", input);
-    toggleSheetsUI(true);
-    showToast("Google Sheets Integration connected!", "success");
+  // Google Sheets Direct OAuth Management
+  document.getElementById("connect-google-btn").addEventListener("click", () => {
+    requestGoogleAuth();
   });
 
-  document.getElementById("disconnect-sheets-btn").addEventListener("click", () => {
-    localStorage.removeItem("p4_sheets_url");
-    toggleSheetsUI(false);
-    showToast("Google Sheets Integration disconnected.", "info");
+  document.getElementById("disconnect-google-btn").addEventListener("click", () => {
+    disconnectGoogle();
+  });
+
+  // Auto-save configs as user edits them
+  document.getElementById("google-spreadsheet-id").addEventListener("input", (e) => {
+    localStorage.setItem("p4_google_spreadsheet_id", e.target.value.trim());
+  });
+
+  document.getElementById("google-sheet-name").addEventListener("input", (e) => {
+    localStorage.setItem("p4_google_sheet_name", e.target.value.trim());
+  });
+
+  document.getElementById("google-client-id").addEventListener("input", (e) => {
+    localStorage.setItem("p4_google_client_id", e.target.value.trim());
+    initGoogleTokenClient();
   });
 
   // Keyword Adding
@@ -1094,20 +1119,7 @@ function showToast(message, type = "info") {
 }
 
 function toggleSheetsUI(isConnected) {
-  const saveBtn = document.getElementById("save-sheets-btn");
-  const disconnectBtn = document.getElementById("disconnect-sheets-btn");
-  const sheetsInput = document.getElementById("sheets-url-input");
-
-  if (isConnected) {
-    saveBtn.style.display = "none";
-    disconnectBtn.style.display = "block";
-    sheetsInput.disabled = true;
-  } else {
-    saveBtn.style.display = "block";
-    disconnectBtn.style.display = "none";
-    sheetsInput.disabled = false;
-    sheetsInput.value = "";
-  }
+  // Deprecated - kept for compatibility
 }
 
 function switchPanel(panelId) {
@@ -1117,50 +1129,168 @@ function switchPanel(panelId) {
   }
 }
 
+let tokenClient;
+
+// Initialize GIS token client
+function initGoogleTokenClient() {
+  try {
+    if (typeof google === "undefined") {
+      // Retry after a delay if script hasn't loaded yet
+      setTimeout(initGoogleTokenClient, 500);
+      return;
+    }
+    
+    const client_id = document.getElementById("google-client-id").value.trim();
+    if (!client_id) return;
+
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: client_id,
+      scope: 'https://www.googleapis.com/auth/spreadsheets',
+      callback: (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
+          state.googleAccessToken = tokenResponse.access_token;
+          localStorage.setItem("p4_google_access_token", tokenResponse.access_token);
+          showToast("Successfully connected Google Account!", "success");
+          toggleGoogleUI(true);
+          
+          // If there was a pending export, execute it now
+          if (state.pendingExportSignal) {
+            exportToGoogleSheets(state.pendingExportSignal);
+            state.pendingExportSignal = null;
+          }
+        }
+      },
+    });
+  } catch (err) {
+    console.error("GIS Initialization error:", err);
+  }
+}
+
+// Trigger GIS popup login
+function requestGoogleAuth() {
+  if (!tokenClient) {
+    initGoogleTokenClient();
+  }
+  if (tokenClient) {
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+  } else {
+    showToast("Google Library not loaded yet. Try again in 2 seconds.", "warning");
+  }
+}
+
+function disconnectGoogle() {
+  state.googleAccessToken = null;
+  localStorage.removeItem("p4_google_access_token");
+  toggleGoogleUI(false);
+  showToast("Google Account disconnected.", "info");
+}
+
+function toggleGoogleUI(isConnected) {
+  const connectBtn = document.getElementById("connect-google-btn");
+  const disconnectBtn = document.getElementById("disconnect-google-btn");
+  const statusText = document.getElementById("google-status-text");
+
+  if (isConnected) {
+    if (connectBtn) connectBtn.style.display = "none";
+    if (disconnectBtn) disconnectBtn.style.display = "block";
+    if (statusText) {
+      statusText.textContent = "Connected & Authorized";
+      statusText.style.color = "var(--color-success)";
+    }
+  } else {
+    if (connectBtn) connectBtn.style.display = "flex";
+    if (disconnectBtn) disconnectBtn.style.display = "none";
+    if (statusText) {
+      statusText.textContent = "Not Connected";
+      statusText.style.color = "var(--text-muted)";
+    }
+  }
+}
+
 function exportToGoogleSheets(signal) {
-  const sheetsUrl = localStorage.getItem("p4_sheets_url");
-  if (!sheetsUrl) {
-    showToast("Please configure your Google Sheets API URL in Settings first.", "warning");
+  if (!state.googleAccessToken) {
+    showToast("Please connect your Google Account in Settings first.", "warning");
+    state.pendingExportSignal = signal; // Save signal to export after login completes
     switchPanel("integration-panel");
     return;
   }
 
   const exportBtn = document.getElementById("export-sheets-btn");
-  exportBtn.disabled = true;
-  exportBtn.innerText = "Exporting...";
+  if (exportBtn) {
+    exportBtn.disabled = true;
+    exportBtn.innerText = "Exporting...";
+  }
+
+  const spreadsheetId = document.getElementById("google-spreadsheet-id").value.trim();
+  const sheetName = document.getElementById("google-sheet-name").value.trim() || "Sheet1";
+  
+  if (!spreadsheetId) {
+    showToast("Please enter a Spreadsheet ID in Settings.", "warning");
+    switchPanel("integration-panel");
+    if (exportBtn) {
+      exportBtn.disabled = false;
+      exportBtn.innerHTML = `
+        <svg style="width:14px;height:14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-7 14H7v-2h5v2zm3-4H7v-2h8v2zm0-4H7V7h8v2z"/></svg>
+        Export Lead
+      `;
+    }
+    return;
+  }
 
   const payload = {
-    date: new Date().toLocaleDateString(),
-    source: signal.source,
-    author: signal.author,
-    company: signal.company,
-    score: signal.score,
-    text: signal.text,
-    pitch: generateDynamicPitch(signal)
+    range: `${sheetName}!A:G`,
+    majorDimension: "ROWS",
+    values: [
+      [
+        new Date().toLocaleDateString(),
+        signal.source || "LinkedIn",
+        signal.author || "Unknown Author",
+        signal.company || "Target Company",
+        signal.score || 0,
+        signal.text || "",
+        generateDynamicPitch(signal)
+      ]
+    ]
   };
 
-  fetch(sheetsUrl, {
+  // Post to Google Sheets append API
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A:G:append?valueInputOption=USER_ENTERED`;
+
+  fetch(url, {
     method: "POST",
     headers: {
+      "Authorization": `Bearer ${state.googleAccessToken}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify(payload)
   })
   .then(res => {
-    // If redirect or CORS occurs but status is OK, we assume it went through (typical of Apps Script redirects)
-    if (!res.ok && res.status !== 0) throw new Error("HTTP error " + res.status);
-    showToast("Successfully exported to Google Sheet!", "success");
+    if (res.status === 401) {
+      // Token expired, re-auth
+      showToast("Session expired. Re-authorizing Google Account...", "info");
+      state.pendingExportSignal = signal;
+      requestGoogleAuth();
+      throw new Error("unauthorized");
+    }
+    if (!res.ok) throw new Error("HTTP error " + res.status);
+    return res.json();
+  })
+  .then(data => {
+    showToast("Successfully exported lead to Google Sheet!", "success");
   })
   .catch(err => {
-    console.error("Export error:", err);
-    // Apps Script triggers redirect which causes CORS issues in simple frontend fetches, but it STILL saves the data!
-    showToast("Export sent. Check your Google Sheet!", "info");
+    if (err.message !== "unauthorized") {
+      console.error("Google Sheets API Export Error:", err);
+      showToast("Failed to write to Google Sheets. Verify your Spreadsheet ID or credentials.", "warning");
+    }
   })
   .finally(() => {
-    exportBtn.disabled = false;
-    exportBtn.innerHTML = `
-      <svg style="width:14px;height:14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-7 14H7v-2h5v2zm3-4H7v-2h8v2zm0-4H7V7h8v2z"/></svg>
-      Export Lead
-    `;
+    if (exportBtn) {
+      exportBtn.disabled = false;
+      exportBtn.innerHTML = `
+        <svg style="width:14px;height:14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-7 14H7v-2h5v2zm3-4H7v-2h8v2zm0-4H7V7h8v2z"/></svg>
+        Export Lead
+      `;
+    }
   });
 }
