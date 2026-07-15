@@ -802,7 +802,20 @@ function openActorModal(actorType) {
   const queriesInput = document.getElementById("actor-queries-input");
   const startBtn = document.getElementById("modal-start-btn");
 
-  queriesInput.value = "";
+  // Pre-fill with a few primary keywords from their active configuration
+  const defaultList = [];
+  if (state.keywords.model.includes("rlhf")) defaultList.push("rlhf");
+  if (state.keywords.discussion.includes("synthetic data")) defaultList.push("synthetic data");
+  if (state.keywords.sourcing.includes("buy data")) defaultList.push("buy data");
+  if (state.keywords.model.includes("foundation model")) defaultList.push("foundation model");
+  
+  if (defaultList.length === 0) {
+    if (state.keywords.model[0]) defaultList.push(state.keywords.model[0]);
+    if (state.keywords.sourcing[0]) defaultList.push(state.keywords.sourcing[0]);
+    if (state.keywords.discussion[0]) defaultList.push(state.keywords.discussion[0]);
+  }
+
+  queriesInput.value = defaultList.join(", ");
   startBtn.setAttribute("data-actor-type", actorType);
 
   if (actorType === "linkedin") {
