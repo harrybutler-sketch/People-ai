@@ -842,7 +842,7 @@ function launchApifyScraper(actorType, query, maxItems) {
     return;
   }
 
-  const actorName = actorType === "linkedin" ? "apify/linkedin-post-scraper" : "apify/google-news-scraper";
+  const actorName = actorType === "linkedin" ? "apify~linkedin-post-scraper" : "apify~google-news-scraper";
   showToast(`Initiating scraper actor: ${actorName}...`, "info");
 
   let fetchUrl;

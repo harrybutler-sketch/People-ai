@@ -73,7 +73,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing actor type or query' });
       }
 
-      const actorName = actor === 'linkedin' ? 'apify/linkedin-post-scraper' : 'apify/google-news-scraper';
+      const actorName = actor === 'linkedin' ? 'apify~linkedin-post-scraper' : 'apify~google-news-scraper';
       
       let actorInput = {};
       if (actor === 'linkedin') {
