@@ -190,11 +190,11 @@
                 <!-- Method A: SheetDB -->
                 <div style="border-bottom:1px solid var(--glass-border); padding-bottom:20px; margin-bottom:20px;">
                   <h4 style="font-size:14px; margin-bottom:8px; color:var(--color-brand);">Option 1: SheetDB URL (Easiest & Recommended)</h4>
-                  <p class="config-desc" style="margin-bottom:12px;">Pasted your SheetDB.io API URL below to append leads instantly without Google security prompts.</p>
+                  <p class="config-desc" style="margin-bottom:12px;">Paste your SheetDB.io API URL below to append leads instantly without Google security prompts.</p>
                   <div class="form-group">
                     <label class="form-label" for="sheets-url-input">SheetDB API URL</label>
                     <div style="display:flex;gap:12px;">
-                      <input type="text" class="form-input" id="sheets-url-input" style="flex-grow:1;" value="https://sheetdb.io/api/v1/sevb7g3u21lhl" placeholder="https://sheetdb.io/api/v1/...">
+                      <input type="password" class="form-input" id="sheets-url-input" style="flex-grow:1;" placeholder="https://sheetdb.io/api/v1/...">
                       <button class="btn btn-primary" id="save-sheets-btn">Connect SheetDB</button>
                       <button class="btn" id="disconnect-sheets-btn" style="display:none;color:var(--color-warning);">Disconnect</button>
                     </div>
@@ -208,12 +208,12 @@
                   
                   <div class="form-group" style="margin-bottom:12px;">
                     <label class="form-label" for="google-client-id">OAuth Client ID</label>
-                    <input type="text" class="form-input" id="google-client-id" value="162703758883-vpfa96i6pt5gr50htg14fnrt7rlmlp43.apps.googleusercontent.com">
+                    <input type="password" class="form-input" id="google-client-id" placeholder="1234567890-abc123xyz.apps.googleusercontent.com">
                   </div>
 
                   <div class="form-group" style="margin-bottom:12px;">
                     <label class="form-label" for="google-spreadsheet-id">Spreadsheet ID</label>
-                    <input type="text" class="form-input" id="google-spreadsheet-id" value="17nKZk4Od7cFPb8RjUCngDHOhSXN9ixotgcc6RxWnw8w">
+                    <input type="password" class="form-input" id="google-spreadsheet-id" placeholder="17nKZk4Od7cFPb8RjUCngDHOhSX...">
                   </div>
 
                   <div class="form-group" style="margin-bottom:16px;">
@@ -233,9 +233,9 @@
                   </div>
                 </div>
 
-                <div style="margin-top:20px; border-top:1px solid var(--glass-border); padding-top:16px;">
+                <div id="connected-sheet-link-container" style="margin-top:20px; border-top:1px solid var(--glass-border); padding-top:16px; display:none;">
                   <span style="font-size:11px;color:var(--text-muted);">
-                    Your Connected Sheet: <a href="https://docs.google.com/spreadsheets/d/17nKZk4Od7cFPb8RjUCngDHOhSXN9ixotgcc6RxWnw8w/edit" target="_blank" style="color:var(--color-brand);text-decoration:underline;">Open Google Sheet ↗</a>
+                    Your Connected Sheet: <a id="google-sheet-link" href="#" target="_blank" style="color:var(--color-brand);text-decoration:underline;">Open Google Sheet ↗</a>
                   </span>
                 </div>
               </div>

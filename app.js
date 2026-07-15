@@ -127,6 +127,9 @@ function loadLocalStorage() {
     }
   }
 
+  // Update sheet link visibility
+  setTimeout(updateDynamicSheetLink, 100);
+
   // Load Saved Signal IDs
   const storedSavedIds = localStorage.getItem("p4_saved_signal_ids");
   if (storedSavedIds) {
@@ -310,6 +313,7 @@ function setupEventListeners() {
   // Auto-save configs as user edits them
   document.getElementById("google-spreadsheet-id").addEventListener("input", (e) => {
     localStorage.setItem("p4_google_spreadsheet_id", e.target.value.trim());
+    updateDynamicSheetLink();
   });
 
   document.getElementById("google-sheet-name").addEventListener("input", (e) => {
@@ -330,12 +334,14 @@ function setupEventListeners() {
     }
     localStorage.setItem("p4_sheets_url", input);
     toggleSheetsUI(true);
+    updateDynamicSheetLink();
     showToast("SheetDB URL successfully saved and connected!", "success");
   });
 
   document.getElementById("disconnect-sheets-btn").addEventListener("click", () => {
     localStorage.removeItem("p4_sheets_url");
     toggleSheetsUI(false);
+    updateDynamicSheetLink();
     showToast("SheetDB URL disconnected.", "info");
   });
 
@@ -1390,4 +1396,27 @@ function exportToGoogleSheets(signal) {
       `;
     }
   });
+}
+
+function updateDynamicSheetLink() {
+  const spreadsheetId = localStorage.getItem("p4_google_spreadsheet_id");
+  const sheetsUrl = localStorage.getItem("p4_sheets_url");
+  const container = document.getElementById("connected-sheet-link-container");
+  const link = document.getElementById("google-sheet-link");
+
+  if (!container || !link) return;
+
+  let sheetLink = "";
+  if (spreadsheetId) {
+    sheetLink = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
+  } else if (sheetsUrl) {
+    sheetLink = "https://docs.google.com/spreadsheets";
+  }
+
+  if (sheetLink) {
+    link.href = sheetLink;
+    container.style.display = "block";
+  } else {
+    container.style.display = "none";
+  }
 }
