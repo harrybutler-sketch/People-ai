@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const token = process.env.APIFY_TOKEN;
+  const token = process.env.APIFY_TOKEN || process.env.apify;
 
   // 1. Check if token is configured in Vercel env variables
   if (req.method === 'GET' && req.query.action === 'check') {
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   }
 
   if (!token) {
-    return res.status(401).json({ error: 'APIFY_TOKEN is not configured on Vercel environment variables.' });
+    return res.status(401).json({ error: 'APIFY_TOKEN or apify environment variable is not configured on Vercel.' });
   }
 
   try {
