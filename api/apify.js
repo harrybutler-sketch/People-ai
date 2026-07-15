@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   }
 
   const token = process.env.APIFY_TOKEN || process.env.apify;
-  const sheetdbUrl = process.env.SHEETDB_URL || process.env.sheetdb;
+  const sheetdbUrl = process.env.SHEETDB_URL || process.env.sheetdb || process.env.GoogleSheetsapi || process.env.googlesheetsapi;
 
   // 1. Check if tokens are configured in Vercel env variables
   if (req.method === 'GET' && req.query.action === 'check') {
