@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>People4.ai - Signal Monitoring Tool</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand-section">
+        <div class="brand-logo">P4</div>
+        <div class="brand-name">People4.ai</div>
+      </div>
+      <nav class="nav-menu">
+        <li class="nav-item active" data-target="feed-panel">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"></path>
+          </svg>
+          Signal Feed
+        </li>
+        <li class="nav-item" data-target="integration-panel">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+          </svg>
+          Apify Connection
+        </li>
+        <li class="nav-item" data-target="keywords-panel">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+          </svg>
+          Signal Keywords
+        </li>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-avatar">BD</div>
+        <div class="user-info">
+          <span class="user-name">BD Manager</span>
+          <span class="user-role">People4.ai BD Team</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="header-title">
+          <h1 id="panel-title-text">Signal Feed</h1>
+        </div>
+        <div class="header-actions">
+          <div class="mode-badge simulation" id="connection-status-badge">
+            <div class="mode-indicator"></div>
+            <span id="connection-status-text">Demo Mode</span>
+          </div>
+          <button class="btn btn-primary" id="manual-sync-btn">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17"></path>
+            </svg>
+            Sync Live Signals
+          </button>
+        </div>
+      </header>
+
+      <!-- Scrollable Inner Viewport -->
+      <div class="dashboard-viewport">
+        <!-- Dashboard Panel -->
+        <div class="dashboard-panel">
+          
+          <!-- PANEL SECTION: FEED -->
+          <section id="feed-panel" class="panel-section active">
+            <!-- Stats Summary Cards -->
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-header">
+                  <span>Total Monitored Signals</span>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <div class="stat-value" id="stat-total">8</div>
+                <div class="stat-footer">Across all sources</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-header">
+                  <span>High Relevance Signals</span>
+                  <svg style="color:var(--color-success);" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                  </svg>
+                </div>
+                <div class="stat-value text-success" id="stat-high">4</div>
+                <div class="stat-footer">High probability sales match</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-header">
+                  <span>Sourcing Queries</span>
+                  <svg style="color:var(--color-info);" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <div class="stat-value text-info" id="stat-sourcing">3</div>
+                <div class="stat-footer">Direct dataset request signal</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-header">
+                  <span>Saved Signals</span>
+                  <svg style="color:var(--color-warning);" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                  </svg>
+                </div>
+                <div class="stat-value text-warning" id="stat-saved">0</div>
+                <div class="stat-footer">Awaiting BD outreach</div>
+              </div>
+            </div>
+
+            <!-- Feed Controls (Tabs & Filters) -->
+            <div class="feed-controls">
+              <div class="tabs">
+                <button class="tab-btn active" data-feed-tab="all">All Signals</button>
+                <button class="tab-btn" data-feed-tab="linkedin">LinkedIn Posts</button>
+                <button class="tab-btn" data-feed-tab="news">News Articles</button>
+                <button class="tab-btn" data-feed-tab="saved">Saved / Starred</button>
+              </div>
+              <div class="search-filters">
+                <div class="search-wrapper">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                  <input type="text" class="search-input" id="search-bar" placeholder="Search companies or text...">
+                </div>
+                <select class="filter-select" id="relevance-filter">
+                  <option value="all">All Relevance</option>
+                  <option value="high">High Only</option>
+                  <option value="medium">Medium & High</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Content Split Grid -->
+            <div class="feed-content-wrapper">
+              <!-- Left side: List of Signals -->
+              <div class="feed-list" id="signals-list-element">
+                <!-- Javascript will inject cards here -->
+              </div>
+
+              <!-- Right side: Detail Drawer -->
+              <div class="detail-panel" id="signal-detail-element">
+                <div class="detail-placeholder" id="detail-placeholder-element">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                  </svg>
+                  <h3>Select a Signal</h3>
+                  <p>Click on any signal card on the left to view relevancy breakdown, source data, and auto-generated pitch templates.</p>
+                </div>
+                <div class="detail-content" id="detail-content-element" style="display: none;">
+                  <!-- Javascript will inject details here -->
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- PANEL SECTION: INTEGRATIONS -->
+          <section id="integration-panel" class="panel-section">
+            <div class="integrations-panel">
+              <div class="config-card">
+                <h3 class="config-title">Apify API Settings</h3>
+                <p class="config-desc">Connect your Apify account to execute scraper tasks directly from this dashboard. Your API token is saved securely in your browser's local storage and is only used to query Apify.</p>
+                <div class="form-group">
+                  <label class="form-label" for="apify-token-input">Apify API Token</label>
+                  <div style="display:flex;gap:12px;">
+                    <input type="password" class="form-input" id="apify-token-input" style="flex-grow:1;" placeholder="apify_api_...">
+                    <button class="btn btn-primary" id="save-token-btn">Connect Token</button>
+                    <button class="btn" id="disconnect-token-btn" style="display:none;color:var(--color-warning);">Disconnect</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="config-card">
+                <h3 class="config-title">Scraper Run Center</h3>
+                <p class="config-desc">Trigger web scraping tasks using the connected Apify actors. Once triggered, the crawler runs in the background on Apify infrastructure and automatically streams results into this feed.</p>
+                
+                <div class="actor-grid">
+                  <div class="actor-card">
+                    <div class="actor-header">
+                      <span class="actor-name">LinkedIn Post Scraper</span>
+                      <span class="actor-tag">apify/linkedin-post-scraper</span>
+                    </div>
+                    <p class="actor-desc">Scrapes posts containing target search phrases from LinkedIn, retrieving author details, profile links, and body text.</p>
+                    <div class="actor-actions">
+                      <button class="btn btn-primary run-actor-btn" data-actor="linkedin">Run LinkedIn Scraper</button>
+                    </div>
+                  </div>
+
+                  <div class="actor-card">
+                    <div class="actor-header">
+                      <span class="actor-name">Google News Scraper</span>
+                      <span class="actor-tag">apify/google-news-scraper</span>
+                    </div>
+                    <p class="actor-desc">Scrapes articles published in Tech and Business news sections containing custom keywords, returning publisher, text snippet, and publish date.</p>
+                    <div class="actor-actions">
+                      <button class="btn btn-primary run-actor-btn" data-actor="news">Run Google News Scraper</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="margin-top:30px;">
+                  <h4 style="font-size:14px;margin-bottom:10px;">Recent Scraping Tasks</h4>
+                  <div class="run-history-list" id="runs-history-container">
+                    <p class="text-muted" style="font-size:12px;text-align:center;padding:20px;">No recent runs. Connect your token and trigger a scraper run to see status here.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- PANEL SECTION: KEYWORDS -->
+          <section id="keywords-panel" class="panel-section">
+            <div class="keyword-panel-content">
+              <div class="keyword-list-container">
+                <div class="config-card">
+                  <h3 class="config-title">AI Model Development Triggers</h3>
+                  <p class="config-desc">Keywords that signal a target company is actively training or engineering models. (Relevance score +15 per match)</p>
+                  <div class="chips-container" id="keywords-model-container"></div>
+                  <div class="chip-input-group">
+                    <input type="text" class="form-input" id="input-keyword-model" placeholder="Add keyword, e.g. foundation models" style="flex-grow:1;">
+                    <button class="btn add-keyword-btn" data-category="model">Add</button>
+                  </div>
+                </div>
+
+                <div class="config-card">
+                  <h3 class="config-title">Data Sourcing Triggers</h3>
+                  <p class="config-desc">Keywords indicating a team is looking to buy, license, or collect datasets or hire annotators. (Relevance score +25 per match)</p>
+                  <div class="chips-container" id="keywords-sourcing-container"></div>
+                  <div class="chip-input-group">
+                    <input type="text" class="form-input" id="input-keyword-sourcing" placeholder="Add keyword, e.g. data labeling" style="flex-grow:1;">
+                    <button class="btn add-keyword-btn" data-category="sourcing">Add</button>
+                  </div>
+                </div>
+
+                <div class="config-card">
+                  <h3 class="config-title">Data Catalogue / Discussions</h3>
+                  <p class="config-desc">Keywords reflecting discussions and comparisons around synthetic, custom, or expert-labeled datasets. (Relevance score +15 per match)</p>
+                  <div class="chips-container" id="keywords-discussion-container"></div>
+                  <div class="chip-input-group">
+                    <input type="text" class="form-input" id="input-keyword-discussion" placeholder="Add keyword, e.g. synthetic data" style="flex-grow:1;">
+                    <button class="btn add-keyword-btn" data-category="discussion">Add</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sidebar Guide for Keywords -->
+              <div>
+                <div class="config-card" style="position: sticky; top: 0;">
+                  <h3 class="config-title" style="font-size:16px;">Relevance Scoring Guide</h3>
+                  <p class="config-desc" style="font-size:12px;line-height:1.6;">
+                    The system analyzes text using a weights-based scoring formula:
+                    <br><br>
+                    <strong>Low Relevance (Score < 15):</strong> Basic AI mentions without actionable sourcing indicators.
+                    <br><br>
+                    <strong>Medium Relevance (Score 15 - 30):</strong> Company is scaling model development, or discussing datasets.
+                    <br><br>
+                    <strong>High Relevance (Score > 30):</strong> Direct intent to source data, scale annotation projects, or complaints about synthetic accuracy.
+                  </p>
+                  <button class="btn btn-primary" id="reset-keywords-btn" style="width:100%;justify-content:center;">Reset to Defaults</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container-element"></div>
+
+  <!-- Modal for Actor Setup Confirmation -->
+  <div id="actor-run-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(5px); z-index:10000; align-items:center; justify-content:center;">
+    <div class="config-card" style="width:450px; background:var(--bg-secondary); border:1px solid var(--glass-border); border-radius:var(--radius-lg); box-shadow:0 15px 35px rgba(0,0,0,0.5);">
+      <h3 class="config-title" id="modal-actor-title">Configure Apify Scraper Run</h3>
+      <p class="config-desc" id="modal-actor-desc">Specify queries to feed to the scraper. Commas separate multiple searches.</p>
+      
+      <div class="form-group">
+        <label class="form-label" for="actor-queries-input">Search Query Phrases</label>
+        <textarea class="form-input" id="actor-queries-input" style="height:80px; resize:none; font-family:inherit;" placeholder="e.g. LLM training datasets, buy radiology data"></textarea>
+      </div>
+
+      <div class="form-group" id="max-items-group">
+        <label class="form-label" for="actor-max-items">Max Items to Scrape</label>
+        <input type="number" class="form-input" id="actor-max-items" value="10" min="1" max="100">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+        <button class="btn" id="modal-cancel-btn">Cancel</button>
+        <button class="btn btn-primary" id="modal-start-btn">Launch Run</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS Dependencies -->
+  <script src="mockData.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
