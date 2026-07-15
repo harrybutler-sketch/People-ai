@@ -117,6 +117,16 @@ function loadLocalStorage() {
     setTimeout(() => toggleGoogleUI(true), 100);
   }
 
+  // Load SheetDB URL
+  const storedSheetsUrl = localStorage.getItem("p4_sheets_url");
+  if (storedSheetsUrl) {
+    const sheetsInput = document.getElementById("sheets-url-input");
+    if (sheetsInput) {
+      sheetsInput.value = storedSheetsUrl;
+      setTimeout(() => toggleSheetsUI(true), 100);
+    }
+  }
+
   // Load Saved Signal IDs
   const storedSavedIds = localStorage.getItem("p4_saved_signal_ids");
   if (storedSavedIds) {
@@ -309,6 +319,24 @@ function setupEventListeners() {
   document.getElementById("google-client-id").addEventListener("input", (e) => {
     localStorage.setItem("p4_google_client_id", e.target.value.trim());
     initGoogleTokenClient();
+  });
+
+  // SheetDB Management
+  document.getElementById("save-sheets-btn").addEventListener("click", () => {
+    const input = document.getElementById("sheets-url-input").value.trim();
+    if (!input) {
+      showToast("Please enter a SheetDB API URL", "warning");
+      return;
+    }
+    localStorage.setItem("p4_sheets_url", input);
+    toggleSheetsUI(true);
+    showToast("SheetDB URL successfully saved and connected!", "success");
+  });
+
+  document.getElementById("disconnect-sheets-btn").addEventListener("click", () => {
+    localStorage.removeItem("p4_sheets_url");
+    toggleSheetsUI(false);
+    showToast("SheetDB URL disconnected.", "info");
   });
 
   // Keyword Adding
@@ -1119,7 +1147,22 @@ function showToast(message, type = "info") {
 }
 
 function toggleSheetsUI(isConnected) {
-  // Deprecated - kept for compatibility
+  const saveBtn = document.getElementById("save-sheets-btn");
+  const disconnectBtn = document.getElementById("disconnect-sheets-btn");
+  const sheetsInput = document.getElementById("sheets-url-input");
+
+  if (isConnected) {
+    if (saveBtn) saveBtn.style.display = "none";
+    if (disconnectBtn) disconnectBtn.style.display = "block";
+    if (sheetsInput) sheetsInput.disabled = true;
+  } else {
+    if (saveBtn) saveBtn.style.display = "block";
+    if (disconnectBtn) disconnectBtn.style.display = "none";
+    if (sheetsInput) {
+      sheetsInput.disabled = false;
+      sheetsInput.value = "";
+    }
+  }
 }
 
 function switchPanel(panelId) {
@@ -1208,17 +1251,71 @@ function toggleGoogleUI(isConnected) {
 }
 
 function exportToGoogleSheets(signal) {
-  if (!state.googleAccessToken) {
-    showToast("Please connect your Google Account in Settings first.", "warning");
-    state.pendingExportSignal = signal; // Save signal to export after login completes
-    switchPanel("integration-panel");
-    return;
-  }
-
+  const sheetsUrl = localStorage.getItem("p4_sheets_url");
   const exportBtn = document.getElementById("export-sheets-btn");
+  
   if (exportBtn) {
     exportBtn.disabled = true;
     exportBtn.innerText = "Exporting...";
+  }
+
+  // 1. If SheetDB URL is saved, use SheetDB (Webhook)
+  if (sheetsUrl) {
+    const payload = {
+      data: [{
+        date: new Date().toLocaleDateString(),
+        source: signal.source || "LinkedIn",
+        author: signal.author || "Unknown",
+        company: signal.company || "Target",
+        score: signal.score || 0,
+        text: signal.text || "",
+        pitch: generateDynamicPitch(signal)
+      }]
+    };
+
+    fetch(sheetsUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("HTTP error " + res.status);
+      return res.json();
+    })
+    .then(data => {
+      showToast("Successfully exported to Google Sheet!", "success");
+    })
+    .catch(err => {
+      console.error("SheetDB export error:", err);
+      showToast("Failed to write to SheetDB. Verify your SheetDB URL.", "warning");
+    })
+    .finally(() => {
+      if (exportBtn) {
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = `
+          <svg style="width:14px;height:14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-7 14H7v-2h5v2zm3-4H7v-2h8v2zm0-4H7V7h8v2z"/></svg>
+          Export Lead
+        `;
+      }
+    });
+    return;
+  }
+
+  // 2. Otherwise, check Google OAuth Direct Connection
+  if (!state.googleAccessToken) {
+    showToast("Please connect either a SheetDB URL or Google Account in Settings first.", "warning");
+    state.pendingExportSignal = signal;
+    switchPanel("integration-panel");
+    if (exportBtn) {
+      exportBtn.disabled = false;
+      exportBtn.innerHTML = `
+        <svg style="width:14px;height:14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m-7 14H7v-2h5v2zm3-4H7v-2h8v2zm0-4H7V7h8v2z"/></svg>
+        Export Lead
+      `;
+    }
+    return;
   }
 
   const spreadsheetId = document.getElementById("google-spreadsheet-id").value.trim();

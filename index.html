@@ -184,34 +184,57 @@
               </div>
 
               <div class="config-card">
-                <h3 class="config-title">Google Sheets Direct Integration</h3>
-                <p class="config-desc">Save your outreach leads directly to your Google Sheet using Google's official API. Sign in with your Google account to grant write permission.</p>
-                
-                <div class="form-group" style="margin-bottom:16px;">
-                  <label class="form-label" for="google-client-id">OAuth Client ID</label>
-                  <input type="text" class="form-input" id="google-client-id" value="162703758883-vpfa96i6pt5gr50htg14fnrt7rlmlp43.apps.googleusercontent.com">
-                </div>
+                <h3 class="config-title">Google Sheets Integration</h3>
+                <p class="config-desc">Save your leads directly to your Google Sheet. Choose the method that works best for you.</p>
 
-                <div class="form-group" style="margin-bottom:16px;">
-                  <label class="form-label" for="google-spreadsheet-id">Spreadsheet ID</label>
-                  <input type="text" class="form-input" id="google-spreadsheet-id" value="17nKZk4Od7cFPb8RjUCngDHOhSXN9ixotgcc6RxWnw8w">
-                </div>
-
-                <div class="form-group" style="margin-bottom:16px;">
-                  <label class="form-label" for="google-sheet-name">Tab / Sheet Name</label>
-                  <input type="text" class="form-input" id="google-sheet-name" value="Sheet1" placeholder="Sheet1">
-                </div>
-
-                <div class="form-group">
-                  <div style="display:flex; align-items:center; gap:16px; margin-top:8px;">
-                    <button class="btn btn-primary" id="connect-google-btn" style="display:flex; align-items:center; gap:8px;">
-                      <svg style="width:16px;height:16px;" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1H12v2.7h5.73c-.25 1.34-1 2.47-2.14 3.23v2.7h3.45c2.01-1.85 3.17-4.58 3.17-7.78 0-.61-.06-1.2-.16-1.85z" /><path fill="currentColor" d="M12 21c2.43 0 4.47-.8 5.96-2.18l-3.45-2.7c-.95.64-2.17 1.02-3.51 1.02-2.7 0-4.99-1.82-5.81-4.28H1.67v2.8A10 10 0 0 0 12 21z" /><path fill="currentColor" d="M6.19 12.86a6.07 6.07 0 0 1 0-3.72V6.34H1.67a10 10 0 0 0 0 11.32l4.52-3.72z" /><path fill="currentColor" d="M12 6.86c1.32 0 2.5.45 3.44 1.35l2.58-2.58C16.46 4.09 14.43 3 12 3 7.24 3 3.25 5.74 1.67 9.06l4.52 3.72c.82-2.46 3.11-4.28 5.81-4.28z" /></svg>
-                      Connect Google Account
-                    </button>
-                    <button class="btn" id="disconnect-google-btn" style="display:none; color:var(--color-warning);">Disconnect Google</button>
-                    <span id="google-status-text" style="font-size:12px; color:var(--text-muted);">Not Connected</span>
+                <!-- Method A: SheetDB -->
+                <div style="border-bottom:1px solid var(--glass-border); padding-bottom:20px; margin-bottom:20px;">
+                  <h4 style="font-size:14px; margin-bottom:8px; color:var(--color-brand);">Option 1: SheetDB URL (Easiest & Recommended)</h4>
+                  <p class="config-desc" style="margin-bottom:12px;">Pasted your SheetDB.io API URL below to append leads instantly without Google security prompts.</p>
+                  <div class="form-group">
+                    <label class="form-label" for="sheets-url-input">SheetDB API URL</label>
+                    <div style="display:flex;gap:12px;">
+                      <input type="text" class="form-input" id="sheets-url-input" style="flex-grow:1;" value="https://sheetdb.io/api/v1/zkdvzed8atfe2" placeholder="https://sheetdb.io/api/v1/...">
+                      <button class="btn btn-primary" id="save-sheets-btn">Connect SheetDB</button>
+                      <button class="btn" id="disconnect-sheets-btn" style="display:none;color:var(--color-warning);">Disconnect</button>
+                    </div>
                   </div>
-                  <span style="font-size:11px;color:var(--text-muted);margin-top:12px;display:block;">
+                </div>
+
+                <!-- Method B: Direct Google Sign-in -->
+                <div>
+                  <h4 style="font-size:14px; margin-bottom:8px; color:var(--text-primary);">Option 2: Direct Google Sign-In</h4>
+                  <p class="config-desc" style="margin-bottom:12px;">Connect directly via your Google account using OAuth credentials.</p>
+                  
+                  <div class="form-group" style="margin-bottom:12px;">
+                    <label class="form-label" for="google-client-id">OAuth Client ID</label>
+                    <input type="text" class="form-input" id="google-client-id" value="162703758883-vpfa96i6pt5gr50htg14fnrt7rlmlp43.apps.googleusercontent.com">
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:12px;">
+                    <label class="form-label" for="google-spreadsheet-id">Spreadsheet ID</label>
+                    <input type="text" class="form-input" id="google-spreadsheet-id" value="17nKZk4Od7cFPb8RjUCngDHOhSXN9ixotgcc6RxWnw8w">
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label" for="google-sheet-name">Tab / Sheet Name</label>
+                    <input type="text" class="form-input" id="google-sheet-name" value="Sheet1" placeholder="Sheet1">
+                  </div>
+
+                  <div class="form-group">
+                    <div style="display:flex; align-items:center; gap:16px;">
+                      <button class="btn btn-primary" id="connect-google-btn" style="display:flex; align-items:center; gap:8px;">
+                        <svg style="width:16px;height:16px;" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1H12v2.7h5.73c-.25 1.34-1 2.47-2.14 3.23v2.7h3.45c2.01-1.85 3.17-4.58 3.17-7.78 0-.61-.06-1.2-.16-1.85z" /><path fill="currentColor" d="M12 21c2.43 0 4.47-.8 5.96-2.18l-3.45-2.7c-.95.64-2.17 1.02-3.51 1.02-2.7 0-4.99-1.82-5.81-4.28H1.67v2.8A10 10 0 0 0 12 21z" /><path fill="currentColor" d="M6.19 12.86a6.07 6.07 0 0 1 0-3.72V6.34H1.67a10 10 0 0 0 0 11.32l4.52-3.72z" /><path fill="currentColor" d="M12 6.86c1.32 0 2.5.45 3.44 1.35l2.58-2.58C16.46 4.09 14.43 3 12 3 7.24 3 3.25 5.74 1.67 9.06l4.52 3.72c.82-2.46 3.11-4.28 5.81-4.28z" /></svg>
+                        Connect Google Account
+                      </button>
+                      <button class="btn" id="disconnect-google-btn" style="display:none; color:var(--color-warning);">Disconnect Google</button>
+                      <span id="google-status-text" style="font-size:12px; color:var(--text-muted);">Not Connected</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="margin-top:20px; border-top:1px solid var(--glass-border); padding-top:16px;">
+                  <span style="font-size:11px;color:var(--text-muted);">
                     Your Connected Sheet: <a href="https://docs.google.com/spreadsheets/d/17nKZk4Od7cFPb8RjUCngDHOhSXN9ixotgcc6RxWnw8w/edit" target="_blank" style="color:var(--color-brand);text-decoration:underline;">Open Google Sheet ↗</a>
                   </span>
                 </div>
