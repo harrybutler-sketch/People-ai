@@ -320,7 +320,7 @@ function setupEventListeners() {
   // Scraper Modals launch
   document.querySelectorAll(".run-actor-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      if (!state.apifyToken) {
+      if (!state.apifyToken && !state.hasBackendToken) {
         showToast("Please connect your Apify API Token in the settings first", "warning");
         // Redirect user to the connection panel
         const navItem = document.querySelector('[data-target="integration-panel"]');
