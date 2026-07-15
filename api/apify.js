@@ -1,5 +1,5 @@
 // Vercel Serverless Function: api/apify.js
-// Proxies requests to Apify securely using the APIFY_TOKEN environment variable.
+// Proxies requests to Apify and SheetDB securely using environment variables.
 
 export default async function handler(req, res) {
   // CORS Headers
@@ -12,10 +12,31 @@ export default async function handler(req, res) {
   }
 
   const token = process.env.APIFY_TOKEN || process.env.apify;
+  const sheetdbUrl = process.env.SHEETDB_URL || process.env.sheetdb;
 
-  // 1. Check if token is configured in Vercel env variables
+  // 1. Check if tokens are configured in Vercel env variables
   if (req.method === 'GET' && req.query.action === 'check') {
-    return res.status(200).json({ hasToken: !!token });
+    return res.status(200).json({ 
+      hasToken: !!token, 
+      hasSheetdb: !!sheetdbUrl 
+    });
+  }
+
+  // 2. Load Sheet data from SheetDB
+  if (req.method === 'GET' && req.query.action === 'load_sheet') {
+    if (!sheetdbUrl) {
+      return res.status(400).json({ error: 'SheetDB URL is not configured on Vercel.' });
+    }
+    try {
+      const response = await fetch(sheetdbUrl);
+      const data = await response.json();
+      if (!response.ok) {
+        return res.status(response.status).json(data);
+      }
+      return res.status(200).json(data);
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to fetch from SheetDB', message: err.message });
+    }
   }
 
   if (!token) {
@@ -23,9 +44,31 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 2. Launch Run (POST)
+    // 3. POST Actions
     if (req.method === 'POST') {
-      const { actor, query, maxItems } = req.body || {};
+      const body = req.body || {};
+      
+      // Save to Google Sheets action
+      if (req.query.action === 'save_to_sheet' || body.action === 'save_to_sheet') {
+        if (!sheetdbUrl) {
+          return res.status(400).json({ error: 'SheetDB URL is not configured on Vercel.' });
+        }
+        
+        const response = await fetch(sheetdbUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: body.data })
+        });
+        
+        const data = await response.json();
+        if (!response.ok) {
+          return res.status(response.status).json(data);
+        }
+        return res.status(200).json(data);
+      }
+
+      // Default: Launch Run
+      const { actor, query, maxItems } = body;
       if (!actor || !query) {
         return res.status(400).json({ error: 'Missing actor type or query' });
       }
@@ -62,7 +105,7 @@ export default async function handler(req, res) {
       return res.status(200).json(data);
     }
 
-    // 3. Poll Run Status (GET)
+    // 4. Poll Run Status (GET)
     if (req.method === 'GET' && req.query.action === 'status') {
       const { runId } = req.query;
       if (!runId) return res.status(400).json({ error: 'Missing runId' });
@@ -76,7 +119,7 @@ export default async function handler(req, res) {
       return res.status(200).json(data);
     }
 
-    // 4. Fetch Dataset Items (GET)
+    // 5. Fetch Dataset Items (GET)
     if (req.method === 'GET' && req.query.action === 'dataset') {
       const { datasetId } = req.query;
       if (!datasetId) return res.status(400).json({ error: 'Missing datasetId' });
