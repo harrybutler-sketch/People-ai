@@ -10,9 +10,10 @@
   <div class="app-container">
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
-      <div class="brand-section">
-        <div class="brand-logo">P4</div>
-        <div class="brand-name">People4.ai</div>
+      <div class="brand-section" style="margin-bottom: 30px;">
+        <a href="https://people4.ai/" target="_blank" style="display:flex; align-items:center; text-decoration:none;">
+          <img src="https://people4.ai/wp-content/uploads/2025/11/people4ai-logo-enhanced-1-e1764165964265.png" alt="People4.ai Logo" style="height:48px; width:auto;" id="brand-logo-img">
+        </a>
       </div>
       <nav class="nav-menu">
         <li class="nav-item active" data-target="feed-panel">
@@ -51,6 +52,9 @@
           <h1 id="panel-title-text">Signal Feed</h1>
         </div>
         <div class="header-actions">
+          <button class="btn" id="theme-toggle-btn" style="padding: 8px; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary);">
+            <svg id="theme-icon" style="width:18px;height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+          </button>
           <div class="mode-badge simulation" id="connection-status-badge">
             <div class="mode-indicator"></div>
             <span id="connection-status-text">Demo Mode</span>
