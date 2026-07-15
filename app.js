@@ -10,6 +10,7 @@ let state = {
   activePanel: "feed-panel",
   selectedSignal: null,
   apifyToken: "",
+  hasBackendToken: false,
   apifyRuns: [],
   keywords: {
     model: ["foundation model", "train", "fine-tuning", "vlm", "llm", "compute", "rlhf", "scaling compute"],
@@ -19,17 +20,31 @@ let state = {
 };
 
 // --- Initialization ---
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   loadLocalStorage();
   initializeDefaultSignals();
   setupEventListeners();
+  await checkBackendToken();
   renderAll();
   
   // Set up periodic check for running Apify tasks (if token is present)
-  if (state.apifyToken) {
+  if (state.apifyToken || state.hasBackendToken) {
     setInterval(checkRunningTasks, 10000);
   }
 });
+
+async function checkBackendToken() {
+  try {
+    const res = await fetch('/api/apify?action=check');
+    const data = await res.json();
+    if (data && data.hasToken) {
+      state.hasBackendToken = true;
+      toggleTokenUI(true, true);
+    }
+  } catch (e) {
+    console.log("No serverless API detected. Operating in Local/Demo Mode.");
+  }
+}
 
 // --- LocalStorage Logic ---
 function loadLocalStorage() {
@@ -300,7 +315,7 @@ function setupEventListeners() {
   });
 }
 
-function toggleTokenUI(isConnected) {
+function toggleTokenUI(isConnected, isBackend = false) {
   const saveBtn = document.getElementById("save-token-btn");
   const disconnectBtn = document.getElementById("disconnect-token-btn");
   const tokenInput = document.getElementById("apify-token-input");
@@ -309,14 +324,23 @@ function toggleTokenUI(isConnected) {
 
   if (isConnected) {
     saveBtn.style.display = "none";
-    disconnectBtn.style.display = "block";
     tokenInput.disabled = true;
     statusBadge.className = "mode-badge live";
-    statusText.textContent = "Live Connection";
+    if (isBackend) {
+      disconnectBtn.style.display = "none";
+      tokenInput.placeholder = "Configured securely in Vercel Environment Variables";
+      tokenInput.value = "••••••••••••••••••••••••••••••••";
+      statusText.textContent = "Live (Vercel Env)";
+    } else {
+      disconnectBtn.style.display = "block";
+      statusText.textContent = "Live Connection";
+    }
   } else {
     saveBtn.style.display = "block";
     disconnectBtn.style.display = "none";
     tokenInput.disabled = false;
+    tokenInput.placeholder = "apify_api_...";
+    tokenInput.value = "";
     statusBadge.className = "mode-badge simulation";
     statusText.textContent = "Demo Mode";
   }
@@ -760,44 +784,62 @@ function closeActorModal() {
 
 // Launch Apify Actor Run via API
 function launchApifyScraper(actorType, query, maxItems) {
-  if (!state.apifyToken) {
+  if (!state.apifyToken && !state.hasBackendToken) {
     showToast("API token is missing", "warning");
     return;
   }
 
   const actorName = actorType === "linkedin" ? "apify/linkedin-post-scraper" : "apify/google-news-scraper";
-  
-  // Construct actor-specific inputs
-  let actorInput = {};
-  if (actorType === "linkedin") {
-    actorInput = {
-      "queries": query.split(",").map(q => q.trim()),
-      "maxItems": maxItems,
-      "deepScrape": false,
-      "proxy": {
-        "useApifyProxy": true
-      }
+  showToast(`Initiating scraper actor: ${actorName}...`, "info");
+
+  let fetchUrl;
+  let fetchOptions = {};
+
+  if (state.hasBackendToken) {
+    fetchUrl = `/api/apify`;
+    fetchOptions = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        actor: actorType,
+        query: query,
+        maxItems: maxItems
+      })
     };
   } else {
-    // Google News Scraper standard parameters
-    actorInput = {
-      "query": query,
-      "maxItems": maxItems,
-      "sortBy": "relevance",
-      "language": "en"
+    // Construct actor-specific inputs
+    let actorInput = {};
+    if (actorType === "linkedin") {
+      actorInput = {
+        "queries": query.split(",").map(q => q.trim()),
+        "maxItems": maxItems,
+        "deepScrape": false,
+        "proxy": {
+          "useApifyProxy": true
+        }
+      };
+    } else {
+      actorInput = {
+        "query": query,
+        "maxItems": maxItems,
+        "sortBy": "relevance",
+        "language": "en"
+      };
+    }
+
+    fetchUrl = `https://api.apify.com/v2/acts/${actorName}/runs?token=${state.apifyToken}`;
+    fetchOptions = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(actorInput)
     };
   }
 
-  showToast(`Initiating scraper actor: ${actorName}...`, "info");
-
-  // Call Apify actor run endpoint
-  fetch(`https://api.apify.com/v2/acts/${actorName}/runs?token=${state.apifyToken}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(actorInput)
-  })
+  fetch(fetchUrl, fetchOptions)
   .then(response => {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -831,9 +873,13 @@ function launchApifyScraper(actorType, query, maxItems) {
 }
 
 function pollRunStatus(runId, userInitiated = false) {
-  if (!state.apifyToken) return;
+  if (!state.apifyToken && !state.hasBackendToken) return;
 
-  fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${state.apifyToken}`)
+  const fetchUrl = state.hasBackendToken 
+    ? `/api/apify?action=status&runId=${runId}` 
+    : `https://api.apify.com/v2/actor-runs/${runId}?token=${state.apifyToken}`;
+
+  fetch(fetchUrl)
   .then(res => res.json())
   .then(data => {
     const runInfo = data.data;
@@ -862,7 +908,11 @@ function pollRunStatus(runId, userInitiated = false) {
 }
 
 function fetchDatasetItems(runId, datasetId) {
-  fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${state.apifyToken}`)
+  const fetchUrl = state.hasBackendToken 
+    ? `/api/apify?action=dataset&datasetId=${datasetId}` 
+    : `https://api.apify.com/v2/datasets/${datasetId}/items?token=${state.apifyToken}`;
+
+  fetch(fetchUrl)
   .then(res => res.json())
   .then(items => {
     if (!Array.isArray(items)) {
