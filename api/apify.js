@@ -73,21 +73,28 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing actor type or query' });
       }
 
-      const actorName = actor === 'linkedin' ? 'apify~linkedin-post-scraper' : 'apify~google-news-scraper';
+      const actorName = actor === 'linkedin' ? 'harvestapi~linkedin-post-search' : 'crawlerbros~google-news-scraper';
       
       let actorInput = {};
       if (actor === 'linkedin') {
+        // harvestapi/linkedin-post-search expects "keyword" (string) and "maxPosts" (integer)
+        const formattedQuery = query.includes(',')
+          ? query.split(',').map(q => {
+              const trimmed = q.trim();
+              return trimmed.includes(' ') ? `"${trimmed}"` : trimmed;
+            }).join(' OR ')
+          : query;
+
         actorInput = {
-          "queries": query.split(',').map(q => q.trim()),
-          "maxItems": parseInt(maxItems, 10) || 10,
-          "deepScrape": false,
-          "proxy": { "useApifyProxy": true }
+          "keyword": formattedQuery,
+          "maxPosts": parseInt(maxItems, 10) || 10,
+          "sort": "date"
         };
       } else {
+        // crawlerbros/google-news-scraper expects "queries" (array of strings) and "maxResultsPerQuery" (integer)
         actorInput = {
-          "query": query,
-          "maxItems": parseInt(maxItems, 10) || 10,
-          "sortBy": "relevance",
+          "queries": query.split(',').map(q => q.trim()),
+          "maxResultsPerQuery": parseInt(maxItems, 10) || 10,
           "language": "en"
         };
       }

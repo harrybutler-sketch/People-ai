@@ -842,7 +842,7 @@ function launchApifyScraper(actorType, query, maxItems) {
     return;
   }
 
-  const actorName = actorType === "linkedin" ? "apify~linkedin-post-scraper" : "apify~google-news-scraper";
+  const actorName = actorType === "linkedin" ? "harvestapi~linkedin-post-search" : "crawlerbros~google-news-scraper";
   showToast(`Initiating scraper actor: ${actorName}...`, "info");
 
   let fetchUrl;
@@ -990,18 +990,18 @@ function fetchDatasetItems(runId, datasetId) {
       };
 
       if (actorType === "linkedin") {
-        mapped.author = item.authorName || item.authorProfileName || item.user?.name || "LinkedIn User";
-        mapped.title = item.authorTitle || item.user?.position || "Professional Connection";
+        mapped.author = item.authorName || item.authorProfileName || item.name || item.user?.name || "LinkedIn User";
+        mapped.title = item.authorTitle || item.authorHeadline || item.headline || item.user?.position || "Professional Connection";
         mapped.company = extractCompanyFromTitle(mapped.title);
-        mapped.text = item.text || item.body || item.description || "";
+        mapped.text = item.text || item.postText || item.body || item.description || "";
         mapped.companySize = "10-250";
         mapped.funding = "Growth/Scaleup";
       } else {
         // News format
-        mapped.author = item.source?.title || item.publisher || "News Source";
+        mapped.author = item.source?.title || item.publisher || item.source || "News Source";
         mapped.title = item.title || "Industry Update";
-        mapped.company = extractCompanyFromText(mapped.title + " " + (item.description || item.snippet || ""));
-        mapped.text = item.description || item.snippet || item.content || item.title || "";
+        mapped.company = extractCompanyFromText(mapped.title + " " + (item.description || item.snippet || item.body || ""));
+        mapped.text = item.text || item.description || item.snippet || item.content || item.title || "";
         mapped.companySize = "50-1000+";
         mapped.funding = "Enterprise/Venture Backed";
       }
