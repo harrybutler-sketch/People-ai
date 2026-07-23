@@ -309,7 +309,7 @@ function setupEventListeners() {
 
   // Manual Sync Action
   document.getElementById("manual-sync-btn").addEventListener("click", () => {
-    if (!state.apifyToken) {
+    if (!state.apifyToken && !state.hasBackendToken) {
       showToast("Simulation Sync complete (Mock feed updated). Connect an Apify token to scrape live data.", "info");
       return;
     }
